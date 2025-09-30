@@ -11,13 +11,16 @@ COPY ./src/package.json ./
 COPY ./src/pnpm-lock.yaml ./
 COPY ./src/pnpm-workspace.yaml ./
 
-# 2. Устанавливаем ВСЕ зависимости (включая devDependencies для сборки)
+# 2. Устанавливаем ВСЕ зависимости
 RUN pnpm install --frozen-lockfile
 
-# 3. Копируем исходный код
+# 3. Явно устанавливаем tailwindcss и необходимые зависимости
+RUN pnpm add -D tailwindcss @tailwindcss/vite @nuxtjs/tailwindcss
+
+# 4. Копируем исходный код
 COPY ./src .
 
-# 4. Собираем проект (игнорируем предупреждения о built dependencies)
+# 5. Собираем проект
 RUN pnpm build
 
 # Stage 2: Production
@@ -30,7 +33,6 @@ COPY --from=builder /app/.output ./.output
 COPY --from=builder /app/package.json ./
 COPY --from=builder /app/pnpm-lock.yaml ./
 
-# Устанавливаем pnpm и production-зависимости
 RUN npm install -g pnpm && \
     pnpm install --prod --frozen-lockfile
 
