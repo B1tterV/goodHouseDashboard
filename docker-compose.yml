@@ -13,18 +13,6 @@ services:
     networks:
       - admin-network
 
-  nginx:
-    image: nginx:alpine
-    ports:
-      - "8080:80"
-    volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf
-    depends_on:
-      - admin-app
-    restart: unless-stopped
-    networks:
-      - admin-network
-
 networks:
   admin-network:
     driver: bridge
