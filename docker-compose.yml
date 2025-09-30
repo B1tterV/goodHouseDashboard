@@ -12,7 +12,7 @@ services:
     restart: unless-stopped
     networks:
       - admin-network
-
-  networks:
-    admin-network:
-      driver: bridge
+      
+networks:
+  admin-network:
+    driver: bridge
