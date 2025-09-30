@@ -6,14 +6,14 @@ RUN npm install -g pnpm
 
 WORKDIR /app
 
-# 1. Копируем только файлы зависимостей
-COPY package.json pnpm-lock.yaml ./
+# 1. Копируем только файлы зависимостей из src
+COPY ./src/package.json ./src/pnpm-lock.yaml ./
 
 # 2. Устанавливаем ВСЕ зависимости через pnpm
 RUN pnpm install --frozen-lockfile
 
-# 3. Копируем исходный код
-COPY . .
+# 3. Копируем исходный код из src
+COPY ./src .
 
 # 4. Собираем проект
 RUN pnpm build
