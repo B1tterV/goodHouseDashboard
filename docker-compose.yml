@@ -10,3 +10,9 @@ services:
       - HOST=0.0.0.0
       - PORT=3001
     restart: unless-stopped
+    networks:
+      - admin-network
+
+  networks:
+    admin-network:
+      driver: bridge
