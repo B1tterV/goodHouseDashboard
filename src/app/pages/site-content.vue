@@ -19,6 +19,10 @@ const links = [[{
   icon: 'ic:baseline-production-quantity-limits',
   to: '/site-content/products'
 }, {
+  label: 'Характеристики',
+  icon: 'ant-design:product-filled',
+  to: '/site-content/characteristics'
+}, {
   label: 'Фильтры',
   icon: 'material-symbols:filter-list',
   to: '/site-content/filters'

@@ -47,6 +47,12 @@ const links = [[
         open.value = false
       }
     }, {
+      label: 'Характеристики',
+      to: '/site-content/characteristics',
+      onSelect: () => {
+        open.value = false
+      }
+    }, {
       label: 'Фильтры',
       to: '/site-content/filters',
       onSelect: () => {

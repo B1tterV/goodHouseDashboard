@@ -50,10 +50,10 @@ const getBrands = async () => {
 
     if (response.data.value) {
       const data = response.data.value
-      itemsList.value = data.data
+      itemsList.value = data.items
 
-      pagination.value.pageSize = data.pagination.limit
-      pagination.value.totalPages = data.pagination.total_pages
+      pagination.value.pageSize = data.size
+      pagination.value.totalPages = data.total
     }
   } catch {
     toast.add({ title: 'Ошибка', description: 'Не удалось получить бренды', color: 'error' })
