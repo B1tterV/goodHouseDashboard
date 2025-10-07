@@ -36,6 +36,7 @@ export default defineNuxtConfig({
 
   auth: {
     originEnvKey: 'NUXT_PUBLIC_API_HOST',
+    baseURL: 'http://api.tatroof.ru',
     provider: {
       type: 'local',
       endpoints: {
