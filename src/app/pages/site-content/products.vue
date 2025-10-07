@@ -18,6 +18,7 @@ import { useProductsStore } from '@/stores/admin/products'
 import { useSubcategoriesStore } from '@/stores/admin/subcategories'
 import { useBrandsStore } from '@/stores/admin/brands'
 import { useCharacteristicsStore } from '@/stores/admin/characteristics'
+import { useTagsStore } from '@/stores/admin/tags'
 
 // Resolved components
 const UAvatar = resolveComponent('UAvatar')
@@ -32,6 +33,7 @@ const productsStore = useProductsStore()
 const subcategoriesStore = useSubcategoriesStore()
 const brandsStore = useBrandsStore()
 const characteristicsStore = useCharacteristicsStore()
+const tagsStore = useTagsStore()
 
 const columnVisibility = ref()
 const rowSelection = ref({})
@@ -54,6 +56,11 @@ const subcategoriesSearchQuery = ref<string>('')
 const brandsLoading = ref<boolean>(false)
 const brandsList = ref<Brand[]>([])
 const brandsSearchQuery = ref<string>('')
+
+// Теги
+const tagsLoading = ref<boolean>(false)
+const tagsList = ref<Tag[]>([])
+const tagsSearchQuery = ref<string>('')
 
 // Шаблоны характеристик
 const characteristicsLoading = ref<boolean>(false)
@@ -121,6 +128,42 @@ const getBrands = async (loadMore: boolean = false) => {
   } finally {
     brandsLoading.value = false
   }
+}
+
+// Получение тегов
+const getTags = async (loadMore: boolean = false) => {
+  if (tagsLoading.value && !loadMore) return
+
+  tagsLoading.value = true
+  try {
+    const response = await tagsStore.getTags({
+      page: 1,
+      limit: 100,
+      ...(tagsSearchQuery.value && { search: tagsSearchQuery.value })
+    })
+
+    if (response.status.value === 'error') {
+      toast.add({ title: 'Ошибка', description: 'Не удалось получить теги', color: 'error' })
+      return
+    }
+
+    if (response.data.value) {
+      const data = response.data.value
+      tagsList.value = data.items || data.data || []
+    }
+  } catch {
+    toast.add({ title: 'Ошибка', description: 'Не удалось получить теги', color: 'error' })
+  } finally {
+    tagsLoading.value = false
+  }
+}
+
+// Обработка поиска тегов
+const handleTagsSearch = async (query: string) => {
+  tagsSearchQuery.value = query
+  setTimeout(() => {
+    getTags(false)
+  }, 300)
 }
 
 // Получение шаблонов характеристик
@@ -387,8 +430,11 @@ const formState = ref({
   discount: 0,
   slug: '',
   in_stock: true,
+  small_description: '',
+  full_description: '',
   subcategory_id: null as number | null,
   brand_id: null as number | null,
+  tag_ids: [] as number[],
   characteristics: [] as Characteristic[],
   images: [] as File[]
 })
@@ -484,14 +530,18 @@ const resetForm = () => {
     discount: 0,
     slug: '',
     in_stock: true,
+    small_description: '',
+    full_description: '',
     subcategory_id: null,
     brand_id: null,
+    tag_ids: [], // Добавлено
     characteristics: [{ name: '', label: '', value: '' }],
     images: []
   }
   imagePreviews.value = []
   subcategoriesSearchQuery.value = ''
   brandsSearchQuery.value = ''
+  tagsSearchQuery.value = '' // Добавлено
   characteristicsSearchQuery.value = ''
 }
 
@@ -561,6 +611,13 @@ const saveNewProduct = async () => {
     if (formState.value.slug) formdata.append('slug', formState.value.slug)
     if (formState.value.discount) formdata.append('discount', formState.value.discount.toString())
     if (formState.value.brand_id) formdata.append('brand_id', formState.value.brand_id.toString())
+    if (formState.value.small_description) formdata.append('small_description', formState.value.small_description)
+    if (formState.value.full_description) formdata.append('full_description', formState.value.full_description)
+
+    // Добавляем теги
+    if (formState.value.tag_ids.length > 0) {
+      formdata.append('tag_ids', JSON.stringify(formState.value.tag_ids))
+    }
 
     // Добавляем характеристики
     if (formState.value.characteristics.length > 0) {
@@ -602,11 +659,17 @@ const saveEditableProduct = async () => {
     formdata.append('price', formState.value.price.toString())
     formdata.append('subcategory_id', formState.value.subcategory_id!.toString())
     formdata.append('in_stock', formState.value.in_stock.toString())
+    if (formState.value.small_description !== undefined) formdata.append('small_description', formState.value.small_description)
+    if (formState.value.full_description !== undefined) formdata.append('full_description', formState.value.full_description)
 
     if (formState.value.article) formdata.append('article', formState.value.article)
     if (formState.value.slug) formdata.append('slug', formState.value.slug)
     if (formState.value.discount) formdata.append('discount', formState.value.discount.toString())
     if (formState.value.brand_id) formdata.append('brand_id', formState.value.brand_id.toString())
+
+    if (formState.value.tag_ids.length > 0) {
+      formdata.append('tag_ids', JSON.stringify(formState.value.tag_ids))
+    }
 
     // Добавляем характеристики
     if (formState.value.characteristics.length > 0) {
@@ -647,8 +710,11 @@ const editProduct = (product: Product) => {
   formState.value.discount = product.discount || 0
   formState.value.slug = product.slug || ''
   formState.value.in_stock = product.in_stock
+  formState.value.small_description = product.small_description || ''
+  formState.value.full_description = product.full_description || ''
   formState.value.subcategory_id = product.subcategory_id
   formState.value.brand_id = product.brand_id
+  formState.value.tag_ids = product.tags ? product.tags.map(tag => tag.id) : []
   formState.value.characteristics = product.characteristics && product.characteristics.length > 0
     ? product.characteristics
     : [{ name: '', label: '', value: '' }]
@@ -673,6 +739,7 @@ const openPopup = async () => {
   await Promise.all([
     getSubcategories(),
     getBrands(),
+    getTags(), // Добавлено
     getCharacteristicsTemplates()
   ])
   isPopupOpen.value = true
@@ -801,6 +868,34 @@ onMounted(() => {
               />
             </UFormField>
 
+            <!-- Краткое описание -->
+            <UFormField
+              label="Краткое описание"
+              name="small_description"
+              class="md:col-span-2"
+            >
+              <UTextarea
+                v-model="formState.small_description"
+                placeholder="Введите краткое описание продукта"
+                class="w-full"
+                :rows="3"
+              />
+            </UFormField>
+
+            <!-- Полное описание -->
+            <UFormField
+              label="Полное описание"
+              name="full_description"
+              class="md:col-span-2"
+            >
+              <UTextarea
+                v-model="formState.full_description"
+                placeholder="Введите полное описание продукта (сохраняются все отступы и форматирование)"
+                class="w-full"
+                :rows="6"
+              />
+            </UFormField>
+
             <!-- Артикул -->
             <UFormField label="Артикул" name="article">
               <UInput
@@ -877,6 +972,20 @@ onMounted(() => {
                 placeholder="Выберите бренд"
                 class="w-full"
                 @update:search-term="handleBrandSearch"
+              />
+            </UFormField>
+
+            <UFormField label="Теги" name="tag_ids">
+              <UInputMenu
+                v-model="formState.tag_ids"
+                :items="tagsList"
+                :loading="tagsLoading"
+                value-key="id"
+                label-key="name"
+                placeholder="Выберите теги"
+                multiple
+                class="w-full"
+                @update:search-term="handleTagsSearch"
               />
             </UFormField>
           </div>
