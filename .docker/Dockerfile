@@ -19,7 +19,6 @@ RUN pnpm add -D tailwindcss @tailwindcss/vite @nuxtjs/tailwindcss
 
 # 4. Копируем исходный код
 COPY ./src .
-COPY .env .
 
 # 5. Собираем проект
 RUN pnpm build
